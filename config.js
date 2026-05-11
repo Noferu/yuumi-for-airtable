@@ -5,7 +5,7 @@ const YUUMI_CONFIG = {
     menuLinks: [
       { label: "❇️ Prospect", url: "https://airtable.com/app7Nqnx527uH5yre/pagzK7pd8bXc7yXv7/form" },
       { label: "🚀 Onboarding", url: "https://airtable.com/app7Nqnx527uH5yre/pag7XrfkEhB9KnlcQ" },
-      { label: "💵 Chiffrage", url: "https://airtable.com/app7Nqnx527uH5yre/pagF9Gp6ZRKr1uYdS" },
+      { label: "💵 Chiffrage", url: "https://airtable.com/app7Nqnx527uH5yre/pagz0BmeLjsd29sHZ" },
       { label: "📧 Mailing", url: "https://n8n.srv780990.hstgr.cloud/form/airtable-mailing" }
       
     ],
