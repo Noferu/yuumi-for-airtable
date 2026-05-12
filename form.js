@@ -6,7 +6,7 @@ function injectFormOverlay(config) {
 
     const AT_FONT  = "'Inter Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     const AT_BLUE  = '#166ee1';
-    const AT_BLUE2 = '#0768f8';   // hover
+    const AT_BLUE2 = '#0768f8';
     const AT_DARK  = '#181d26';
     const AT_MUTED = '#616670';
     const AT_BORDER= '#e5e9f0';
@@ -18,9 +18,6 @@ function injectFormOverlay(config) {
     </svg>`;
     const ICON_CLOSE = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-    </svg>`;
-    const ICON_CHECK = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M2.5 8.5L6.5 12.5L13.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`;
 
     const container = document.createElement('div');
@@ -80,7 +77,6 @@ function injectFormOverlay(config) {
             box-sizing: border-box;
             overflow: hidden;
         ">
-            <!-- Header -->
             <div style="
                 display: flex;
                 align-items: center;
@@ -113,9 +109,7 @@ function injectFormOverlay(config) {
                 onmouseout="this.style.background='none'; this.style.color='${AT_MUTED}'"
                 >${ICON_CLOSE}</button>
             </div>
-            <!-- Body -->
             <div style="padding: 14px 16px 4px;">${fieldsHtml}</div>
-            <!-- Footer -->
             <div style="padding: 8px 16px 14px;">
                 <button id="app-submit-btn" style="
                     width: 100%;
@@ -135,14 +129,11 @@ function injectFormOverlay(config) {
                 "
                 onmouseover="this.style.background='${AT_BLUE2}'"
                 onmouseout="this.style.background='${AT_BLUE}'"
-                >
-                    Envoyer
-                </button>
+                >Envoyer</button>
                 <div id="app-feedback" style="margin-top: 8px; font-size: 12px; text-align: center; min-height: 18px; color: ${AT_MUTED};"></div>
             </div>
         </div>
 
-        <!-- FAB pill button -->
         <button id="app-toggle-btn" style="
             background: ${AT_BLUE};
             color: white;
@@ -170,11 +161,11 @@ function injectFormOverlay(config) {
 
     document.body.appendChild(container);
 
-    const panel     = container.querySelector('#app-form-panel');
-    const toggleBtn = container.querySelector('#app-toggle-btn');
-    const submitBtn = container.querySelector('#app-submit-btn');
+    const panel      = container.querySelector('#app-form-panel');
+    const toggleBtn  = container.querySelector('#app-toggle-btn');
+    const submitBtn  = container.querySelector('#app-submit-btn');
     const toggleIcon = container.querySelector('#app-toggle-icon');
-    const toggleLabel = container.querySelector('#app-toggle-label');
+    const toggleLabel= container.querySelector('#app-toggle-label');
 
     toggleBtn.onclick = () => {
         const isOpen = panel.style.display === 'block';
@@ -191,8 +182,8 @@ function injectFormOverlay(config) {
 
     submitBtn.onclick = async () => {
         const feedback = container.querySelector('#app-feedback');
-        const inputs = container.querySelectorAll('[data-field]');
-        const payload = Array.from(inputs).reduce((acc, i) => ({ ...acc, [i.dataset.field]: i.value }), {});
+        const inputs   = container.querySelectorAll('[data-field]');
+        const payload  = Array.from(inputs).reduce((acc, i) => ({ ...acc, [i.dataset.field]: i.value }), {});
 
         submitBtn.disabled = true;
         submitBtn.style.opacity = '0.7';
@@ -227,13 +218,18 @@ function injectFormOverlay(config) {
     };
 }
 
+function urlMatchesForm(form) {
+    const urls = Array.isArray(form.detectUrl) ? form.detectUrl : [form.detectUrl];
+    return urls.some(u => window.location.href.includes(u));
+}
+
 let _evalDebounceTimer = null;
 function evaluateFormView() {
     clearTimeout(_evalDebounceTimer);
     _evalDebounceTimer = setTimeout(() => {
         if (!YUUMI_CONFIG?.forms) return;
 
-        const active = YUUMI_CONFIG.forms.find(f => window.location.href.includes(f.detectUrl));
+        const active   = YUUMI_CONFIG.forms.find(f => urlMatchesForm(f));
         const existing = document.getElementById('app-overlay-container');
 
         if (active) {
@@ -259,14 +255,19 @@ function initForm() {
     evaluateFormView();
 }
 
-function waitForConfig(callback, retries = 20) {
-    if (typeof YUUMI_CONFIG !== 'undefined') {
+function waitForConfig(callback, retries = 30) {
+    if (typeof YUUMI_CONFIG !== 'undefined' && YUUMI_CONFIG !== null) {
         callback();
     } else if (retries > 0) {
-        setTimeout(() => waitForConfig(callback, retries - 1), 50);
+        setTimeout(() => waitForConfig(callback, retries - 1), 100);
     } else {
         console.warn('[Yuumi] form.js : YUUMI_CONFIG introuvable après attente.');
     }
 }
 
-waitForConfig(initForm);
+// Config is loaded asynchronously in config.js
+if (typeof loadYuumiConfig === 'function') {
+    loadYuumiConfig(() => waitForConfig(initForm));
+} else {
+    waitForConfig(initForm);
+}

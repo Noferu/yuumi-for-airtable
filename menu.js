@@ -21,22 +21,45 @@ function injectMenu(nav) {
     });
 }
 
+function teardownMenu(nav) {
+    nav.querySelectorAll('[data-app="sep"], [data-app="link"]').forEach(el => el.remove());
+}
+
 function initMenu() {
     const observer = new MutationObserver(() => {
         const nav = document.querySelector('[data-tutorial-selector-id="appTopBarNavigationItems"]');
         if (nav) injectMenu(nav);
     });
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // Re-inject if config was updated from popup settings
+    chrome.runtime.onMessage.addListener((request) => {
+        if (request.action === 'yuumi_config_updated') {
+            if (typeof loadYuumiConfig === 'function') {
+                loadYuumiConfig(() => {
+                    const nav = document.querySelector('[data-tutorial-selector-id="appTopBarNavigationItems"]');
+                    if (nav) {
+                        teardownMenu(nav);
+                        injectMenu(nav);
+                    }
+                });
+            }
+        }
+    });
 }
 
-function waitForConfig(callback, retries = 20) {
-    if (typeof YUUMI_CONFIG !== 'undefined') {
+function waitForConfig(callback, retries = 30) {
+    if (typeof YUUMI_CONFIG !== 'undefined' && YUUMI_CONFIG !== null) {
         callback();
     } else if (retries > 0) {
-        setTimeout(() => waitForConfig(callback, retries - 1), 50);
+        setTimeout(() => waitForConfig(callback, retries - 1), 100);
     } else {
         console.warn('[Yuumi] menu.js : YUUMI_CONFIG introuvable après attente.');
     }
 }
 
-waitForConfig(initMenu);
+if (typeof loadYuumiConfig === 'function') {
+    loadYuumiConfig(() => waitForConfig(initMenu));
+} else {
+    waitForConfig(initMenu);
+}

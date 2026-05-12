@@ -1,13 +1,19 @@
 /**
  * Table visibility manager
+ * Supports pinnedTables: table IDs that are ALWAYS visible regardless of active configs.
  */
 
 const STORAGE_KEY = 'yuumi_active_configs';
 
 function getVisibleTableIds(activeConfigs) {
-    if (!activeConfigs || activeConfigs.length === 0) return null; // null = tout afficher
+    const pinned = YUUMI_CONFIG?.pinnedTables ?? [];
 
-    const ids = new Set();
+    if (!activeConfigs || activeConfigs.length === 0) {
+        // Show everything, but still respect pinned (they're always visible anyway)
+        return null;
+    }
+
+    const ids = new Set(pinned); // pinned tables are always included
     activeConfigs.forEach(configName => {
         const found = YUUMI_CONFIG.visibleTables.find(c => c.config === configName);
         if (found) found.tables.forEach(id => ids.add(id));
@@ -16,10 +22,11 @@ function getVisibleTableIds(activeConfigs) {
 }
 
 function applyVisibility(visibleIds) {
+    const pinned = new Set(YUUMI_CONFIG?.pinnedTables ?? []);
     const tabs = document.querySelectorAll('[id^="tableTab-"]');
     tabs.forEach(tab => {
         const tableId = tab.id.replace('tableTab-', '');
-        if (visibleIds === null) {
+        if (visibleIds === null || pinned.has(tableId)) {
             tab.style.display = '';
         } else {
             tab.style.display = visibleIds.has(tableId) ? '' : 'none';
@@ -72,16 +79,26 @@ chrome.runtime.onMessage.addListener((request) => {
         _currentVisibleIds = getVisibleTableIds(request.activeConfigs);
         applyVisibility(_currentVisibleIds);
     }
+    // Reload config if settings changed
+    if (request.action === 'yuumi_config_updated') {
+        if (typeof loadYuumiConfig === 'function') {
+            loadYuumiConfig(() => loadAndApply());
+        }
+    }
 });
 
-function waitForConfig(callback, retries = 20) {
-    if (typeof YUUMI_CONFIG !== 'undefined') {
+function waitForConfig(callback, retries = 30) {
+    if (typeof YUUMI_CONFIG !== 'undefined' && YUUMI_CONFIG !== null) {
         callback();
     } else if (retries > 0) {
-        setTimeout(() => waitForConfig(callback, retries - 1), 50);
+        setTimeout(() => waitForConfig(callback, retries - 1), 100);
     } else {
         console.warn('[Yuumi] tables.js : YUUMI_CONFIG introuvable après attente.');
     }
 }
 
-waitForConfig(loadAndApply);
+if (typeof loadYuumiConfig === 'function') {
+    loadYuumiConfig(() => waitForConfig(loadAndApply));
+} else {
+    waitForConfig(loadAndApply);
+}
