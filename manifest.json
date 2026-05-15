@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
 
-  "name": "Yuumi, Compagnon Airtable",
+  "name": "Yuumi, compagnon Airtable",
   "short_name": "Yuumi",
 
-  "version": "1.5.0",
-  "version_name": "1.5 UI Update",
+  "version": "2.0.0",
+  "version_name": "2.0 - Refonte UI/UX",
 
   "description": "Chevauchant son Grimoire, Yuumi bondit sur Airtable pour y greffer des boutons magiques et des portails vers d'autres dimensions.",
 
@@ -29,80 +29,59 @@
     "https://hooks.airtable.com/*"
   ],
 
-  "optional_host_permissions": [
-    "https://*.make.com/*",
-    "https://*.n8n.cloud/*"
-  ],
-
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background/background.js"
   },
 
   "action": {
     "default_title": "Yuumi",
     "default_popup": "popup/popup.html",
     "default_icon": {
-      "16": "icon16.png",
-      "48": "icon48.png",
-      "128": "icon128.png"
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
     }
   },
 
   "content_scripts": [
     {
-      "matches": [
-        "https://airtable.com/*"
-      ],
-
+      "matches": ["https://airtable.com/*"],
       "js": [
-        "config.js",
-        "menu.js",
-        "form.js",
-        "tables.js"
+        "content/config.js",
+        "content/menu.js",
+        "content/form.js",
+        "content/tables.js"
       ],
-
       "run_at": "document_idle",
-
-      "all_frames": true,
-      "match_about_blank": true
+      "all_frames": false
     }
   ],
 
   "web_accessible_resources": [
     {
       "resources": [
-        "*.png",
-        "*.svg",
-        "*.css",
-        "*.js",
-        "popup/*"
+        "assets/icon16.png",
+        "assets/icon48.png",
+        "assets/icon128.png"
       ],
-
-      "matches": [
-        "https://airtable.com/*"
-      ]
+      "matches": ["<all_urls>"]
+    },
+    {
+      "resources": [
+        "popup/*.css",
+        "popup/*.js"
+      ],
+      "matches": ["https://airtable.com/*"]
     }
   ],
-
-  "commands": {
-    "_execute_action": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+Y",
-        "mac": "Command+Shift+Y"
-      },
-
-      "description": "Open Yuumi"
-    }
-  },
 
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self';"
   },
 
   "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
   }
 }
